@@ -1,73 +1,219 @@
-# Welcome to your Lovable project
+# KLE-IPR Patent Tracker (Local-Only)
 
-## Project info
+A full-featured, client-side patent application tracking system for KLE Technological University that runs completely in your browser with no backend required.
 
-**URL**: https://lovable.dev/projects/242edd67-0084-429e-937d-5e9567d6f9e6
+## Features
 
-## How can I edit this code?
+- ✅ **Local-First Architecture** - All data stored in browser's IndexedDB
+- 📊 **Comprehensive Dashboard** - Statistics, renewals, and analytics
+- 🔍 **Advanced Search & Filtering** - Find patents quickly
+- 📄 **Excel Import/Export** - Import from KLE-IPR.xlsx, export to CSV/Excel
+- 👥 **Role-Based Access** - Admin and Viewer roles
+- 💰 **Renewal Management** - Track renewal dates and payment history
+- 🔗 **External Links** - Direct links to Google Drive docs and IP India portal
+- 📱 **Responsive Design** - Works on desktop and mobile
 
-There are several ways of editing your application.
+## Quick Start
 
-**Use Lovable**
+### Installation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/242edd67-0084-429e-937d-5e9567d6f9e6) and start prompting.
+```bash
+# Install dependencies
+npm install
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will open at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Default Login Credentials
 
-**Use GitHub Codespaces**
+**Admin Account:**
+- Username: `admin`
+- Password: `admin123`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**Viewer Account:**
+- Username: `viewer`
+- Password: `viewer123`
 
-## What technologies are used for this project?
+## First-Time Setup
 
-This project is built with:
+1. The system automatically initializes on first load
+2. Default users are created
+3. Patents from `/public/data/KLE-IPR.xlsx` are automatically imported
+4. Login with admin credentials to access all features
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## User Roles
 
-## How can I deploy this project?
+### Admin
+- Full read/write access
+- Add/edit patents
+- Manage renewal payments
+- Import/export data
+- View all features
 
-Simply open [Lovable](https://lovable.dev/projects/242edd67-0084-429e-937d-5e9567d6f9e6) and click on Share -> Publish.
+### Viewer
+- Read-only access
+- Search and filter patents
+- View details and renewal information
+- Export filtered data
 
-## Can I connect a custom domain to my Lovable project?
+## Data Storage
 
-Yes, you can!
+All data is stored locally in your browser using IndexedDB:
+- **Patents** - Complete patent information with metadata
+- **Renewal Payments** - Payment history for each patent
+- **Users** - Login credentials (passwords hashed with bcrypt)
+- **Change Logs** - Audit trail of modifications
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Data Persistence
+- Data persists across browser sessions
+- No data sent to external servers
+- Export database anytime for backup
+- Re-import from Excel to restore/update
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Key Features
+
+### Dashboard
+- Total patents, granted, under examination statistics
+- Renewal alerts (30/60/90 day windows)
+- Recent activity feed
+- Color-coded status badges
+
+### Patent Management
+- Searchable table with filters
+- Detailed view with all patent information
+- Links to source documents (Google Drive)
+- Links to IP India portal
+- Renewal payment tracking
+
+### Import & Export
+- Import Excel files with patent data
+- Re-import default file
+- Export filtered results to CSV
+- Full database export
+- Backup and restore capabilities
+
+### Renewal Tracking
+- Visual alerts for upcoming renewals
+- Payment history per patent
+- Add payment records (admin only)
+- Renewal fee tracking
+
+## Excel File Format
+
+The system expects Excel files with the following columns:
+- Application Number (with hyperlinks)
+- Invention Title
+- Status
+- Application Date
+- Publication Date
+- Grant Date
+- Renewal Date
+- Patent Number
+- Applicant
+- Main Innovator
+- Other Innovators
+- Details of IP in Brief
+
+All other columns are preserved in raw_metadata.
+
+## Status Color Coding
+
+- 🟢 **Green** - Granted
+- 🔵 **Blue** - Under Examination / AE
+- 🟣 **Purple** - Filed / Published
+- 🔴 **Red** - Abandoned / Ceased / Expired
+- 🟠 **Orange** - Renewal Due
+- ⚫ **Gray** - Unknown / Other
+
+## Technology Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Database**: Dexie.js (IndexedDB wrapper)
+- **Excel Parsing**: xlsx (SheetJS)
+- **Authentication**: bcrypt.js (client-side)
+- **Charts**: Recharts
+- **State Management**: React hooks
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Security Notes
+
+- Passwords are hashed using bcrypt before storage
+- Authentication state stored in localStorage
+- All data stays in the browser
+- No external API calls (except optional IP India lookups)
+- Export functionality for data portability
+
+## Browser Support
+
+Works in all modern browsers that support:
+- IndexedDB
+- ES6+
+- Web Crypto API
+
+Tested on:
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## Data Backup
+
+**Important:** Since data is stored in browser storage:
+
+1. **Regular Exports** - Use "Export Full Database" frequently
+2. **Browser Data** - Don't clear browser data/cookies
+3. **Multiple Browsers** - Data is per-browser, not synced
+4. **Backup Files** - Keep exported Excel files safe
+
+## Troubleshooting
+
+### Patents not loading
+- Check browser console for errors
+- Verify `/public/data/KLE-IPR.xlsx` exists
+- Try clearing IndexedDB and refreshing
+
+### Import fails
+- Ensure Excel file format matches expected structure
+- Check file size (large files may take time)
+- Verify column names match
+
+### Lost data
+- Check if browser storage was cleared
+- Restore from exported backup file
+- Re-import from original KLE-IPR.xlsx
+
+## License
+
+Copyright © 2024 KLE Technological University
+
+## Support
+
+For issues or questions:
+- Check browser console for errors
+- Verify Excel file format
+- Ensure browser supports IndexedDB
+- Try in incognito mode to rule out extensions
+
+---
+
+**Built with ❤️ for KLE Technological University**
