@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/lib/auth';
-import { importExcelFile, importFromPublicFile } from '@/lib/excel-import';
 import { db } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +19,6 @@ export default function Import() {
       navigate('/dashboard');
       return;
     }
-
     loadStats();
   }, [navigate]);
 
@@ -31,23 +29,59 @@ export default function Import() {
     setStats({ patents: patentCount, users: userCount, payments: paymentCount });
   };
 
+  // -------------------- Import Excel --------------------
   const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setLoading(true);
     try {
-      const result = await importExcelFile(file);
-      
-      if (result.success) {
-        toast.success(`Successfully imported ${result.imported} patents`);
-        if (result.errors.length > 0) {
-          console.warn('Import warnings:', result.errors);
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      let imported = 0;
+      let errors: string[] = [];
+
+      for (const row of rows) {
+        try {
+          if (!row['Application Number'] || !row['Title']) continue;
+
+          const normalizedStatus = (row['Status'] || 'Unknown').toString().trim();
+
+          await db.patents.put({
+            application_number: row['Application Number'].toString().trim(),
+            title: row['Title'].toString().trim(),
+            inventors: row['Inventors']?.toString().trim() || '',
+            applicants: row['Applicants']?.toString().trim() || '',
+            status: normalizedStatus,  // important: trimmed
+            patent_number: row['Patent Number']?.toString().trim() || null,
+            filed_date: row['Filed Date']?.toString().trim() || null,
+            published_date: row['Published Date']?.toString().trim() || null,
+            granted_date: row['Granted Date']?.toString().trim() || null,
+            renewal_due_date: row['Renewal Due Date']?.toString().trim() || null,
+            google_drive_link: row['Google Drive Link']?.toString().trim() || null,
+            ipindia_status_url: row['IP India URL']?.toString().trim() || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+
+          imported++;
+        } catch (err) {
+          errors.push(`Failed row: ${JSON.stringify(row)}`);
         }
-        loadStats();
-      } else {
-        toast.error('Import failed: ' + result.errors.join(', '));
       }
+
+      if (errors.length > 0) {
+        toast.warn(`Imported ${imported} patents with some warnings`);
+        console.warn(errors);
+      } else {
+        toast.success(`Successfully imported ${imported} patents`);
+      }
+
+      loadStats();
     } catch (error) {
       toast.error('Import failed');
       console.error(error);
@@ -60,26 +94,22 @@ export default function Import() {
   const handleReimportDefault = async () => {
     setLoading(true);
     try {
-      const result = await importFromPublicFile();
-      
-      if (result.success) {
-        toast.success(`Re-imported ${result.imported} patents from default file`);
-        loadStats();
-      } else {
-        toast.error('Re-import failed: ' + result.errors.join(', '));
-      }
-    } catch (error) {
+      // replace with your logic to fetch default file
+      const response = await fetch('/default_patents.xlsx');
+      const blob = await response.blob();
+      const file = new File([blob], 'default_patents.xlsx');
+      await handleFileImport({ target: { files: [file] } } as any);
+    } catch (err) {
       toast.error('Re-import failed');
-      console.error(error);
-    } finally {
+      console.error(err);
       setLoading(false);
     }
   };
 
+  // -------------------- Export Database --------------------
   const handleExportDatabase = async () => {
     try {
       const allPatents = await db.patents.toArray();
-      
       const exportData = allPatents.map(p => ({
         'Application Number': p.application_number,
         'Title': p.title,
@@ -102,10 +132,10 @@ export default function Import() {
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Patents');
-      
+
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
       XLSX.writeFile(wb, `KLE-IPR_full_export_${timestamp}.xlsx`);
-      
+
       toast.success('Database exported successfully');
     } catch (error) {
       toast.error('Export failed');
@@ -114,15 +144,13 @@ export default function Import() {
   };
 
   const handleClearDatabase = async () => {
-    if (!confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      return;
-    }
+    if (!confirm('Are you sure you want to clear ALL data? This cannot be undone!')) return;
 
     try {
       await db.patents.clear();
       await db.renewal_payments.clear();
       await db.change_logs.clear();
-      
+
       toast.success('Database cleared');
       loadStats();
     } catch (error) {
@@ -168,7 +196,7 @@ export default function Import() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Statistics */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
@@ -215,9 +243,7 @@ export default function Import() {
               </p>
               <label htmlFor="file-upload">
                 <Button variant="outline" disabled={loading} asChild>
-                  <span>
-                    {loading ? 'Importing...' : 'Choose File'}
-                  </span>
+                  <span>{loading ? 'Importing...' : 'Choose File'}</span>
                 </Button>
               </label>
               <input
@@ -229,7 +255,6 @@ export default function Import() {
                 disabled={loading}
               />
             </div>
-
             <div className="flex gap-2">
               <Button 
                 onClick={handleReimportDefault}
@@ -272,11 +297,7 @@ export default function Import() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={handleClearDatabase}
-              variant="destructive"
-              className="w-full"
-            >
+            <Button onClick={handleClearDatabase} variant="destructive" className="w-full">
               Clear All Data
             </Button>
           </CardContent>

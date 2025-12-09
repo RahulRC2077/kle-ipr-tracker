@@ -11,8 +11,8 @@ export async function initializeDatabase(): Promise<boolean> {
       console.log('Initializing database with default users...');
       
       // Create default users
-      const adminPasswordHash = await bcrypt.hash('admin123', 10);
-      const viewerPasswordHash = await bcrypt.hash('viewer123', 10);
+      const adminPasswordHash = await bcrypt.hash('kletech@admin#25', 10);
+      const viewerPasswordHash = await bcrypt.hash('Viewer@kletech', 10);
       
       await db.users.bulkAdd([
         {

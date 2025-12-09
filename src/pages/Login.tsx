@@ -84,9 +84,7 @@ export default function Login() {
           </form>
 
           <div className="mt-6 p-4 bg-muted rounded-lg text-sm">
-            <p className="font-semibold mb-2">Default Credentials:</p>
-            <p><strong>Admin:</strong> admin / admin123</p>
-            <p><strong>Viewer:</strong> viewer / viewer123</p>
+            
           </div>
         </CardContent>
       </Card>

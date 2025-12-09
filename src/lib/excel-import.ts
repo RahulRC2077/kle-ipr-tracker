@@ -68,14 +68,22 @@ export async function importExcelFile(file: File): Promise<ImportResult> {
       const row = dataRows[rowIndex];
       
       try {
-        // Get application number with hyperlink
-        const appNumCol = colMap['application no'] ?? colMap['application number'] ?? 2;
-        const appNumCellRef = XLSX.utils.encode_cell({ r: rowIndex + 2, c: appNumCol });
-        const appNumCell = worksheet[appNumCellRef];
-        const appNumber = String(row[appNumCol] || '').trim();
-        const googleDriveLink = extractHyperlink(appNumCell);
+        // Get application number with hyperlink fallback
+	const appNumCol = colMap['application no'];
+	const appNumCellRef = XLSX.utils.encode_cell({ r: rowIndex + 2, c: appNumCol });
+	const appNumCell = worksheet[appNumCellRef];
 
-        if (!appNumber) continue;
+	// JSON sheet parser often returns "" for hyperlink cells.
+	// So use appNumCell.v (visible text) as fallback.
+	let appNumber = String(row[appNumCol] || '').trim();
+	if (!appNumber && appNumCell && appNumCell.v) {
+	    appNumber = String(appNumCell.v).trim();
+	}
+
+	const googleDriveLink = extractHyperlink(appNumCell);
+
+	// If still empty, skip row
+	if (!appNumber) continue;
 
         // Extract all fields
         const patent: Omit<Patent, 'id'> = {
